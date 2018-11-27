@@ -6,6 +6,7 @@ author: Yajue Yang
 
 import numpy as np
 import scipy.optimize
+from cvxopt import matrix, solvers
 
 
 def LS_regression(x, y):
@@ -64,13 +65,30 @@ def solve_lp_scipy(C, A_ub, b_ub, A_eq, b_eq, bounds=None):
     Minimize C^T * x, s.t. A_ub * x <= b_ub and A_eq * x == b_eq
     :return: optimization results
     """
-    result = scipy.optimize.linprog(C, A_ub, b_ub, A_eq, b_eq, bounds=bounds, method='interior-point',
-                                    options={'alpha0': 0.99999, 'beta': 0.1, 'maxiter': 100000, 'disp': False,
-                                             'tol': 1e-10, 'sparse': False, 'lstsq': False, 'sym_pos': True,
-                                             'cholesky': None, 'pc': True, 'ip': False, 'presolve': False,
-                                             'permc_spec': 'MMD_AT_PLUS_A', 'rr': True, '_sparse_presolve': False})
+    result = scipy.optimize.linprog(C, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method='interior-point')
 
     return result
+
+
+def solve_lp_cvxopt(C, A_ub, b_ub, A_eq=None, b_eq=None):
+
+    c = matrix(C)
+    G = matrix(A_ub)
+    h = matrix(b_ub)
+
+    A = None
+    if A_eq:
+        A = matrix(A_eq)
+
+    b = None
+    if b_eq:
+        b = matrix(b_eq)
+
+    result = solvers.lp(c, G, h, A, b)
+
+    x_sol = result['x']
+
+    return x_sol
 
 
 def LASSO_regression(x, y, hp):
@@ -119,8 +137,6 @@ def RR_regression(x, y):
     dim_param = x.shape[0]
     num_samples = x.shape[1]
 
-    print(x.shape)
-
     C = np.zeros(dim_param)
 
     C = np.concatenate((C, np.ones(num_samples)))
@@ -137,16 +153,30 @@ def RR_regression(x, y):
     b_ub = -y
     b_ub = np.concatenate((b_ub, y))
 
-    # print(b_ub)
+    cvx_x_sol = solve_lp_cvxopt(C, A_ub, b_ub)
 
-    result = solve_lp_scipy(C, A_ub, b_ub, A_eq=None, b_eq=None)
-
-    aux_theta = result.x
-
-    print(aux_theta)
-
-    theta = aux_theta[:dim_param]
-
-    print(theta)
+    theta = np.ndarray((dim_param,))
+    for i in range(dim_param):
+        theta[i] = cvx_x_sol[i]
 
     return theta
+
+
+def BR_regression(x, y, hp):
+    """
+    Bayesian regression. theta ~ N(0, alpha * I), y|x, theta ~ N(f(x, theta), sigma^2)
+    :param x: the batch of transformed inputs [x1, x2, ..., xn]
+    :param y: the batch of observations [y1; y2; ...; yn]
+    :param hp: hyper-parameter
+    :return: fitted parameters
+    """
+    dim_param = x.shape[0]
+    x_t = np.transpose(x)
+
+    # estimated variance
+    var_e = np.linalg.inv((1 / hp) * np.identity(dim_param) + (1 / 5) * x @ x_t)
+
+    # estimated variance
+    mu_e = (1 / 5) * var_e @ x @ y
+
+    return mu_e, var_e

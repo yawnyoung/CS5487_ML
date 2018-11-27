@@ -7,7 +7,7 @@ author: Yajue Yang
 import numpy as np
 
 
-def load_polydata(sampled=True):
+def load_polydata(ratio = 1, sampled=True, shuffle=False):
     """
     load poly data
     :param sampled: if true, load sample data; if false, load test data
@@ -31,6 +31,19 @@ def load_polydata(sampled=True):
         for line in f:
             y.append(float(line))
 
+    x_y = np.ndarray((len(x), 2))
+
+    x_y[:, 0] = np.array(x)
+    x_y[:, 1] = np.array(y)
+
+    if shuffle:
+        np.random.shuffle(x_y)
+
+    num_sample = int(ratio * len(x))
+
+    x = x_y[:num_sample, 0]
+    y = x_y[:num_sample, 1]
+
     return x, y
 
 
@@ -42,7 +55,7 @@ def feature_poly_tf(x, k):
     :return: transformed feature
     """
     n = len(x)
-    Phi = np.ndarray(shape=(k+1, n))
+    Phi = np.ndarray(shape=(k+1, n), dtype=np.float32)
 
     for i in range(n):
         for j in range(k+1):
