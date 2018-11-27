@@ -58,10 +58,21 @@ if __name__ == '__main__':
     """
     LASSO training
     """
-    theta_lasso_rls_5 = LASSO_regression(sample_phi_5, np.array(sample_y), 1)
+    # theta_lasso_5 = LASSO_regression(sample_phi_5, np.array(sample_y), 1)
+    #
+    # et_y = np.transpose(test_phi_5) @ theta_lasso_5
+    #
+    # es_y = np.transpose(sample_phi_5) @ theta_lasso_5
+    #
+    # estimated_func_plot(test_x, test_y, et_y, sample_x, es_y)
 
-    et_y = np.transpose(test_phi_5) @ theta_lasso_rls_5
+    """
+    RR training
+    """
+    theta_rr_5 = RR_regression(sample_phi_5, np.array(sample_y))
 
-    es_y = np.transpose(sample_phi_5) @ theta_lasso_rls_5
+    et_y = np.transpose(test_phi_5) @ theta_rr_5
+
+    es_y = np.transpose(sample_phi_5) @ theta_rr_5
 
     estimated_func_plot(test_x, test_y, et_y, sample_x, es_y)
