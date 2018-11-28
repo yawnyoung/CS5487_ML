@@ -180,3 +180,6 @@ def BR_regression(x, y, hp):
     mu_e = (1 / 5) * var_e @ x @ y
 
     return mu_e, var_e
+
+
+

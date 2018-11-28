@@ -64,7 +64,39 @@ def feature_poly_tf(x, k):
     return Phi
 
 
+def load_count_data(sampled=True):
+    """
+    load count data
+    :param sampled: if true, load sample data; if false, load test data
+    :return: (x, y)
+    """
+    if sampled:
+        file_name = 'count_data_train'
+    else:
+        file_name = 'count_data_test'
+
+    # load x
+    with open(file_name + 'x.txt') as f:
+
+        first_line = f.readline()
+        first_line = first_line.split()
+
+        x = np.array([[float(v) for v in first_line]])
+
+        for line in f:
+            line = line.split()
+            x = np.append(x, np.array([[float(v) for v in line]]), axis=0)
+
+    # load y
+    y = []
+    with open(file_name + 'y.txt') as f:
+
+        for line in f:
+            y.append(float(line))
+
+    return x, np.array(y)
+
+
 if __name__ == '__main__':
 
-    x, y = load_polydata()
-    feature_poly_tf(x, 3)
+    load_count_data()

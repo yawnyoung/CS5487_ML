@@ -7,115 +7,172 @@ author Yajue Yang
 from PA_1.data_processing import load_polydata
 from PA_1.data_processing import feature_poly_tf
 from PA_1.regression_alg import *
-import matplotlib.pyplot as plt
+import random
+from PA_1.result_analysis import *
 
 
-def estimated_func_plot(t_x, et_y, s_x, s_y, title=None):
+def err_vs_training_size():
     """
-    Plot estimated function
-    :param t_x: polyx
-    :param et_y: estimated polyy
-    :param s_x: samplex
-    :param s_y: sampley
+    Find the error versus training size
     :return:
     """
-    plt.plot(t_x, et_y, 'r', label='estimated function')
-    plt.plot(s_x, s_y, 'b.', label='sample data')
-    if title:
-        plt.title(title)
+    ratio = [1, 0.85, 0.75, 0.6, 0.5, 0.25, 0.15]
+
+    mse_stat = np.ndarray((5, len(ratio)))
+
+    num_trials = 10
+
+    for alg_idx in range(5):
+
+        for r_idx in range(len(ratio)):
+
+            mse = 0
+            theta = 0
+            mu_e = 0
+
+            for trial_idx in range(num_trials):
+                sample_x, sample_y = load_polydata(ratio[r_idx], shuffle=True)
+                test_x, test_y = load_polydata(1, shuffle=False)
+                sample_phi = feature_poly_tf(sample_x, 5)
+                test_phi = feature_poly_tf(test_x, 5)
+                if alg_idx == 0:
+                    theta = LS_regression(sample_phi, np.array(sample_y))
+                elif alg_idx == 1:
+                    theta = RLS_regression(sample_phi, np.array(sample_y), 5)
+                elif alg_idx == 2:
+                    theta = LASSO_regression(sample_phi, np.array(sample_y), 5)
+                elif alg_idx == 3:
+                    theta = RR_regression(sample_phi, np.array(sample_y))
+                else:
+                    mu_e, var_e = BR_regression(sample_phi, sample_y, 10)
+
+                if alg_idx == 4:
+                    et_y = np.transpose(test_phi) @ mu_e
+                else:
+                    et_y = np.transpose(test_phi) @ theta
+
+                mse += mean_square_err(et_y, test_y)
+
+            mse_stat[alg_idx, r_idx] = mse / num_trials
+
+        print(alg_idx, r_idx, mse_stat[alg_idx, r_idx])
+
+    # plot
+    fig, axes = plt.subplots(5)
+
+    colors = ['r', 'g', 'b', 'y', 'm']
+    labels = ['LS', 'RLS', 'LASSO', 'RR', 'BR']
+    for i in range(5):
+        axes[i].plot(ratio, mse_stat[i, :], colors[i], label=labels[i])
+        axes[i].legend()
+
+    fig.text(0.5, 0.04, "training size", ha="center", va="center")
+    fig.text(0.05, 0.5, "mean-squared error", ha="center", va="center", rotation=90)
+
+    plt.show()
+
+    for i in range(5):
+        plt.plot(ratio, mse_stat[i, :], colors[i], label=labels[i])
+
+    plt.xlabel('training size')
+    plt.ylabel('mean-squared error')
+
     plt.legend()
     plt.show()
 
 
-def br_func_plot(t_x, et_y, std_err, s_x, s_y):
+def add_outliers(s_y, ratio=0.1, mu=5, std=5):
     """
-    Plot Bayesian estimated function
-    :param t_x: polyx
-    :param et_y: estimated polyy
-    :param std_err: standard deviation
-    :param s_x: samplex
+    Add outliers output values with Gaussian noise
     :param s_y: sampley
-    :return:
+    :param ratio: the size of values to be modified
+    :return: modified y
     """
-    plt.plot(t_x, et_y, 'r', label='estimated function')
-    plt.fill_between(t_x, et_y-std_err, et_y+std_err, label='standard deviation', color='g')
-    plt.plot(s_x, s_y, 'b.', label='sample data')
-    plt.title('Bayesian Regression')
-    plt.legend()
-    plt.show()
+    num_sample = len(s_y)
+    num_modified = int(num_sample * ratio)
+
+    print('number of modified data: ', num_modified)
+
+    indices_modified = random.sample(range(num_sample), num_modified)
+
+    print('modified indices: ', indices_modified)
+
+    modified_y = s_y.copy()
+
+    for i in indices_modified:
+        noise = np.random.normal(mu, std, 1)
+        # print('noise: ', noise)
+        modified_y[i] += noise
+        # print(s_y[i], modified_y[i])
+
+    return modified_y
 
 
-def mean_square_err(y_t, y_e):
-    """
-    Calculate mean square error
-    :param y_t: true y
-    :param y_e: estimated y
-    :return:
-    """
-    return np.mean(np.square(y_e - y_t))
+def compare_algorithms(sample_x, sample_y, test_x, test_y, order):
+
+    # 5th order polynomial inputs
+    sample_phi = feature_poly_tf(sample_x, order)
+    test_phi = feature_poly_tf(test_x, order)
+
+    theta = 0
+    mu_e = 0
+    var_e = 0
+
+    algo_name = ['Least Squares', 'Regularized Least Squares', 'LASSO', 'Robust Regression', 'Bayesian Regression']
+
+    for i in range(5):
+        if i == 0:
+            theta = LS_regression(sample_phi, np.array(sample_y))
+        elif i == 1:
+            theta = RLS_regression(sample_phi, np.array(sample_y), 5)
+        elif i == 2:
+            theta = LASSO_regression(sample_phi, np.array(sample_y), 5)
+        elif i == 3:
+            theta = RR_regression(sample_phi, np.array(sample_y))
+        else:
+            mu_e, var_e = BR_regression(sample_phi, sample_y, 10)
+
+        if i == 4:
+            et_y = np.transpose(test_phi) @ mu_e
+            var_star = np.transpose(test_phi) @ var_e @ test_phi
+            std_err = np.sqrt(var_star.diagonal())
+            br_func_plot(test_x, et_y, std_err, sample_x, sample_y)
+        else:
+            et_y = np.transpose(test_phi) @ theta
+            estimated_func_plot(test_x, et_y, sample_x, sample_y, algo_name[i])
+
+        print(algo_name[i] + ' mse: ', mean_square_err(et_y, test_y))
+
+
+def outlier_test():
+
+    sample_x, sample_y = load_polydata()
+    test_x, test_y = load_polydata(sampled=False)
+    sample_y = add_outliers(sample_y, ratio=0.1, mu=10, std=10)
+
+    compare_algorithms(sample_x, sample_y, test_x, test_y, 5)
+
+
+def ten_order_test():
+    sample_x, sample_y = load_polydata()
+    test_x, test_y = load_polydata(sampled=False)
+
+    compare_algorithms(sample_x, sample_y, test_x, test_y, 10)
 
 
 if __name__ == '__main__':
 
-    ratio = 0.15
-
-    sample_x, sample_y = load_polydata(ratio)
-    test_x, test_y = load_polydata(1, False)
-
-    # 5th order polynomial inputs
-    sample_phi = feature_poly_tf(sample_x, 5)
-    test_phi = feature_poly_tf(test_x, 5)
+    """
+    part1-c
+    """
+    # err_vs_training_size()
 
     """
-    LS
+    part1-d
     """
-    theta_ls = LS_regression(sample_phi, np.array(sample_y))
-
-    et_y = np.transpose(test_phi) @ theta_ls
-
-    print('ls mse: ', mean_square_err(et_y, test_y))
-
-    # estimated_func_plot(test_x, et_y, sample_x, sample_y, 'Least Squares')
+    # outlier_test()
 
     """
-    RLS
+    part1-e
     """
-    theta_rls = RLS_regression(sample_phi, np.array(sample_y), 5)
-
-    et_y = np.transpose(test_phi) @ theta_rls
-
-    print('rls mse: ', mean_square_err(et_y, test_y))
-
-    # estimated_func_plot(test_x, et_y, sample_x, sample_y, 'Regularized Least Squares')
-
-    """
-    LASSO
-    # """
-    theta_lasso = LASSO_regression(sample_phi, np.array(sample_y), 5)
-
-    et_y = np.transpose(test_phi) @ theta_lasso
-
-    print('lasso mse: ', mean_square_err(et_y, test_y))
-
-    # estimated_func_plot(test_x, et_y, sample_x, sample_y, 'LASSO')
-
-    """
-    RR
-    """
-    theta_rr = RR_regression(sample_phi, np.array(sample_y))
-
-    et_y = np.transpose(test_phi) @ theta_rr
-
-    # estimated_func_plot(test_x, et_y, sample_x, sample_y, 'Robust Regression')
-
-    # print('rr mse: ', mean_square_err(et_y, test_y))
-
-    """
-    BR
-    """
-    mu_e, var_e = BR_regression(sample_phi, sample_y, 10)
-    et_y = np.transpose(test_phi) @ mu_e
-    print('br mse: ', mean_square_err(et_y, test_y))
-    # var_star = np.transpose(test_phi) @ var_e @ test_phi
-    # std_err = np.sqrt(var_star.diagonal())
-    # br_func_plot(test_x, et_y, std_err, sample_x, sample_y)
+    ten_order_test()
