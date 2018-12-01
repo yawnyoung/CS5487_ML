@@ -5,6 +5,7 @@ author: Yajue Yang
 """
 
 from project.data_processing import load_train_test_data
+from project.utils import *
 import numpy as np
 import math
 
@@ -49,10 +50,6 @@ def fisher_discriminant_features(x, y):
     print(Theta.shape)
 
     return Theta, x_mean
-
-
-def euclidean_dist(x, y):
-    return np.linalg.norm((x - y))
 
 
 def classify(dist_func, x, df_param, class_centroid):
