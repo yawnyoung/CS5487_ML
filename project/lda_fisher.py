@@ -4,7 +4,7 @@ Fisher linear discriminant algorithm
 author: Yajue Yang
 """
 
-from project.data_processing import load_train_test_data
+from project.data_processing import load_train_test_data, add_gaussian_noises
 from project.utils import *
 import numpy as np
 import math
@@ -47,7 +47,7 @@ def fisher_discriminant_features(x, y):
     Theta = (eig_vec[0] / np.linalg.norm(eig_vec[0]))[:, np.newaxis]
     Theta = np.append(Theta, (eig_vec[1] / np.linalg.norm(eig_vec[1]))[:, np.newaxis], axis=1)
 
-    print(Theta.shape)
+    # print(Theta.shape)
 
     return Theta, x_mean
 
@@ -76,10 +76,48 @@ def test_stat(dist_func, test_data, df_param, class_centroids):
     y_true = test_data[0]
     num_test = len(x)
 
+    accuracy = 0
+
     for i in range(num_test):
         c_idx, dist = classify(dist_func, np.array(x[i]), df_param, class_centroids)
 
-        print(c_idx, y_true[i])
+        if c_idx == y_true[i]:
+            accuracy += 1
+
+    return accuracy / num_test
+
+
+def accuracy_against_size(t_size, add_noise=False, sigma_sqr=None, ret_acc=True):
+
+    acc = 0
+
+    for i in range(NUM_RANDOM):
+
+        train_data, test_data = load_train_test_data(t_size, True)
+
+        if add_noise:
+            train_data = add_gaussian_noises(train_data, sigma_sqr)
+
+        df_param, c_centroids = fisher_discriminant_features(train_data[1], train_data[0])
+
+        acc += test_stat(euclidean_dist, test_data, df_param, c_centroids)
+
+    acc /= NUM_RANDOM
+
+    if ret_acc:
+        return acc
+    else:
+        return 1 - acc
+
+
+def accuracy_against_size_stat(train_sizes, add_noise=False, sigma_sqr=None, ret_acc=True):
+
+    acc = []
+
+    for s in train_sizes:
+        acc.append(accuracy_against_size(s, add_noise, sigma_sqr, ret_acc))
+
+    return acc
 
 
 if __name__ == '__main__':
