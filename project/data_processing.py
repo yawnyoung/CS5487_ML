@@ -84,6 +84,8 @@ def load_train_test_data(train_ratio=0.9, shuffle=False):
         train_feat += features[train_start_idx:train_end_idx]
         test_feat += features[train_end_idx:train_end_idx+hist_classes[i] - num_train[i]]
 
+    # todo:whiten
+
     return (train_tgt, train_feat), (test_tgt, test_feat)
 
 
@@ -100,7 +102,9 @@ def add_gaussian_noises(data, sigma_sqr):
     noise_data_idx = np.random.randint(0, num_data, int(0.1 * num_data)).tolist()
 
     for i in noise_data_idx:
+
         x_arr = np.array(x[i]) + np.random.multivariate_normal(np.zeros(dim_param), cov, 1)
+        x_arr = x_arr.flatten()
         x[i] = x_arr.tolist()
 
     return (y, x)

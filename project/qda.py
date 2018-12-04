@@ -98,10 +98,12 @@ def test_stat(x_mean, x_cov, test_data):
         if c == test_targets[i]:
             accuracy += 1
 
+    print('single accuracy: ', accuracy / num_test)
+
     return accuracy / num_test
 
 
-def accuracy_against_size(t_size, add_noise=False, sigma_sqr = None, ret_acc=True):
+def accuracy_test(t_size, add_noise=False, sigma_sqr=None, ret_acc=True):
 
     acc = 0
 
@@ -120,18 +122,31 @@ def accuracy_against_size(t_size, add_noise=False, sigma_sqr = None, ret_acc=Tru
 
     acc /= NUM_RANDOM
 
+    print('all accuracy: ', acc)
+
     if ret_acc:
         return acc
     else:
         return 1 - acc
 
 
-def accuracy_against_size_stat(train_sizes, add_noise=False, sigma_sqr = None, ret_acc=True):
+def accuracy_against_size_stat(train_sizes, ret_acc=True):
 
     acc = []
 
     for s in train_sizes:
-        acc.append(accuracy_against_size(s, add_noise, sigma_sqr, ret_acc))
+        acc.append(accuracy_test(s, ret_acc=ret_acc))
+
+    return acc
+
+
+def accuracy_against_noise_stat(sigma_sqrs, train_size=0.9, ret_acc=True):
+
+    acc = []
+
+    for s in sigma_sqrs:
+        print('sigma square: ', s)
+        acc.append(accuracy_test(train_size, add_noise=True, sigma_sqr=s, ret_acc=ret_acc))
 
     return acc
 
