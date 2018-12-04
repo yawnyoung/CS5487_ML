@@ -42,7 +42,7 @@ def update_kmeans_z(x, curr_mean):
     return z
 
 
-def update_kmeans_mean(x, z):
+def update_kmeans_mean(x, z, mean_range = None):
 
     num_class = z.shape[0]
     num_data = x.shape[1]
@@ -59,12 +59,22 @@ def update_kmeans_mean(x, z):
                 count_class[k] += 1
                 break
 
-    updated_mean = np.divide(updated_mean, count_class)
+    # print('count class: ', count_class)
+
+    for k in range(num_class):
+
+        if count_class[k] != 0:
+            updated_mean[:, k] /= count_class[k]
+
+        else:
+            for d in range(dim_feat):
+                updated_mean[d, k] = np.random.uniform(mean_range[d, 0], mean_range[d, 1], 1)
+    # print('mean: \n', updated_mean)
 
     return updated_mean
 
 
-def k_means(x, init_mean, epsilon):
+def k_means(x, init_mean, epsilon, mean_range = None):
     """
     K-Means clustering algorithm
     :param x: data
@@ -81,15 +91,21 @@ def k_means(x, init_mean, epsilon):
     z = np.zeros((num_class, num_data))
     curr_mean = np.copy(init_mean)
 
+    iteration = 0
+
     while one_true(np.greater(mean_err, epsilon)):
+        print('iteration: ', iteration)
+        # print('current mean: ', curr_mean)
 
         z = update_kmeans_z(x, curr_mean)
 
-        new_mean = update_kmeans_mean(x, z)
+        new_mean = update_kmeans_mean(x, z, mean_range)
 
         mean_err = np.array([np.linalg.norm(new_mean[:, k] - curr_mean[:, k]) for k in range(num_class)])
 
         curr_mean = new_mean
+
+        iteration += 1
 
     return curr_mean, z
 

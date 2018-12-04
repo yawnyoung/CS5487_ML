@@ -44,7 +44,6 @@ def plot_cov_ellipse(cov, pos, nstd=2, ax=None, **kwargs):
     vals, vecs = eigsorted(cov)
     theta = np.degrees(np.arctan2(*vecs[:,0][::-1]))
 
-    # Width and height are "full" widths, not radius
     width, height = 2 * nstd * np.sqrt(vals)
     ellip = Ellipse(xy=pos, width=width, height=height, angle=theta, fill=False, **kwargs)
 
@@ -76,8 +75,6 @@ def plot_gmm_clustering(x, means, cov, z, fig_name):
 def test_k_means():
     x, y = load_synthetic_data('C')
 
-    # init_mean = np.array([[-3, 3, 4, -2], [3, 4, -3, -2]])
-    # init_mean = np.random.rand(2, 4) * 10
     init_mean = np.random.uniform(-15, 15, 2 * 4).reshape((2, 4))
     print(init_mean)
 
@@ -86,9 +83,6 @@ def test_k_means():
     curr_mean, z = k_means(x, init_mean, epsilon)
 
     plot_k_means_clustering(x, z, curr_mean, 'dataC',)
-
-    # print(curr_mean)
-    # print(z.shape)
 
 
 def test_em_gmm():
@@ -99,7 +93,6 @@ def test_em_gmm():
 
     dim_param = x.shape[0]
     init_pis = np.array([0.25, 0.25, 0.25, 0.25])
-    # init_mean = np.array([[-3, 3, 4, -2], [3, 4, -3, -2]])
     init_mean = np.random.uniform(-15, 15, 2 * 4).reshape((2, 4))
 
     # epsilon = np.array([0.001, 0.001, 0.001, 0.001])
@@ -141,10 +134,5 @@ def test_mean_shift():
 if __name__ == '__main__':
 
     # test_k_means()
-
     # test_em_gmm()
     test_mean_shift()
-
-    # colors = cm.rainbow(np.linspace(0, 1, 10))
-    #
-    # plt.plot(1, 2, '.', )
