@@ -7,6 +7,11 @@ author: Yajue
 import numpy as np
 from scipy.stats import multivariate_normal
 import math
+from PA_2.data_processing import *
+
+
+def euclidean_dist(x, y):
+    return np.linalg.norm((np.array(x) - np.array(y)))
 
 
 def one_true(conds):
@@ -220,6 +225,31 @@ def EM_GMM(x, init_pis, init_means, init_cov, inc_thld):
     return curr_pis, curr_means, curr_cov, z
 
 
+def neighbourhood_points(x, data, d_thold=2):
+
+    num_data = data.shape[1]
+
+    x_nbr = []
+
+    for i in range(num_data):
+        distance_between = euclidean_dist(x, data[:, i])
+        if distance_between <= d_thold:
+            x_nbr.append(data[:, i].tolist())
+
+    x_nbr = np.array(x_nbr).T
+
+    # print(x_nbr.shape)
+
+    return x_nbr
+
+
+def gaussian_kernel(dist, h):
+
+    val = (1 / (h * math.sqrt(2 * math.pi))) * np.exp(-0.5 * ((dist / h)) ** 2)
+
+    return val
+
+
 def mean_shift(x, h, x_init, ct):
 
     num_data = x.shape[1]
@@ -232,13 +262,20 @@ def mean_shift(x, h, x_init, ct):
 
     while x_err > ct:
 
+        # find neighbor points
+        x_nbr = neighbourhood_points(x_curr, x, 0.5)
+
+        num_nbr = x_nbr.shape[1]
+        print('# neighbors: ', num_nbr)
+
         x_expectation = np.zeros(dim_param)
 
-        for i in range(num_data):
-            x_expectation += x[:, i] * multivariate_normal.pdf(x[:, i], x_curr, h * h * np.identity(dim_param))
+        den = 0
+        for i in range(num_nbr):
+            x_expectation += x_nbr[:, i] * multivariate_normal.pdf(x_nbr[:, i], x_curr, h * h * np.identity(dim_param))
+            den += multivariate_normal.pdf(x_nbr[:, i], x_curr, h * h * np.identity(dim_param))
 
-        x_next = x_expectation / np.sum([multivariate_normal.pdf(x[:, i], x_curr, h * h * np.identity(dim_param))
-                                         for i in range(num_data)])
+        x_next = x_expectation / den
 
         x_err = np.linalg.norm(x_curr - x_next)
 
@@ -279,3 +316,11 @@ def mean_shift_clustering(x, h, ct, pr_min):
 
     return x_cnvg, peaks, z
 
+
+if __name__ == '__main__':
+
+    data_name = 'A'
+
+    x, y = load_synthetic_data(data_name)
+
+    mean_shift(x, 0, x[:, 0], 0)

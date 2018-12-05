@@ -124,13 +124,12 @@ def test_mean_shift():
 
     X_w = whiten(X.T).T
 
-    h = 0.5
+    h = 1
     ct = 0.001
     pr_min = 0.1
     x_cnvg, peaks, Z = mean_shift_clustering(X_w, h, ct, pr_min)
 
     Y = Z + 1
-    print(Y)
 
     # make segmentation image from labels
     segm = pa2_utils.labels2seg(Y, L)

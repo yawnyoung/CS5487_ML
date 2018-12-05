@@ -115,7 +115,7 @@ def test_mean_shift():
 
     x, y = load_synthetic_data(data_name)
 
-    h = 0.5
+    h = 1.5
     ct = 0.001
     pr_min = 0.1
     x_cnvg, peaks, z = mean_shift_clustering(x, h, ct, pr_min)
