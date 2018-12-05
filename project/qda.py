@@ -81,6 +81,8 @@ def classify_data(x_mean, x_cov, feat):
         # print(score)
         z.append(score)
 
+    # print('score: ', z)
+
     return np.argmax(np.array(z)) + 1
 
 

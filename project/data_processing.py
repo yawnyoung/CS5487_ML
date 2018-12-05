@@ -84,7 +84,17 @@ def load_train_test_data(train_ratio=0.9, shuffle=False):
         train_feat += features[train_start_idx:train_end_idx]
         test_feat += features[train_end_idx:train_end_idx+hist_classes[i] - num_train[i]]
 
-    # todo:whiten
+    train_feat_arr = np.array(train_feat)
+    train_feat_mean = np.average(train_feat_arr, axis=0)
+    train_feat_std = np.std(train_feat_arr, axis=0)
+
+    # whiten train features
+    train_feat_arr = (train_feat_arr - train_feat_mean) / train_feat_std
+    train_feat = train_feat_arr.tolist()
+
+    # whiten test features
+    test_feat_arr = (np.array(test_feat) - train_feat_mean) / train_feat_std
+    test_feat = test_feat_arr.tolist()
 
     return (train_tgt, train_feat), (test_tgt, test_feat)
 
@@ -97,15 +107,20 @@ def add_gaussian_noises(data, sigma_sqr):
     num_data = len(y)
     dim_param = len(x[0])
 
-    cov = np.identity(dim_param) * sigma_sqr
+    # cov = np.identity(dim_param) * sigma_sqr
+    cov = np.identity(dim_param)
 
-    noise_data_idx = np.random.randint(0, num_data, int(0.1 * num_data)).tolist()
+    noise_data_idx = np.random.randint(0, num_data, int(0.5 * num_data)).tolist()
 
     for i in noise_data_idx:
-
-        x_arr = np.array(x[i]) + np.random.multivariate_normal(np.zeros(dim_param), cov, 1)
+        # print('before: ', x[i])
+        noise = np.random.multivariate_normal(np.random.uniform(size=dim_param).reshape(dim_param)*sigma_sqr, cov, 1).flatten()
+        # print('noise: ', noise)
+        x_arr = np.array(x[i]) + noise
         x_arr = x_arr.flatten()
-        x[i] = x_arr.tolist()
+        # print('after x_arr: ', x_arr)
+        x[i] = x_arr.tolist().copy()
+        # print('after: ', x[i])
 
     return (y, x)
 
@@ -119,4 +134,4 @@ if __name__ == '__main__':
     # print('train data:\n', train_data)
     # print('test data:\n', test_data)
 
-    train_data = add_gaussian_noises(train_data, 0.1)
+    # train_data = add_gaussian_noises(train_data, 0.1)

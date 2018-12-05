@@ -29,7 +29,7 @@ def classify_data(w, feat):
     return decision_rule(y_classfied)
 
 
-def accuracy_against_size(t_size, hp, add_noise=False, sigma_sqr=None, ret_acc=True):
+def accuracy_test(t_size, hp, add_noise=False, sigma_sqr=None, ret_acc=True):
 
     acc = 0
 
@@ -53,12 +53,23 @@ def accuracy_against_size(t_size, hp, add_noise=False, sigma_sqr=None, ret_acc=T
         return 1 - acc
 
 
-def accuracy_against_size_stat(train_sizes, hp, add_noise=False, sigma_sqr=None, ret_acc=True):
+def accuracy_against_size_stat(train_sizes, hp, ret_acc=True):
 
     acc = []
 
     for s in train_sizes:
-        acc.append(accuracy_against_size(s, hp, add_noise, sigma_sqr, ret_acc))
+        acc.append(accuracy_test(s, hp, ret_acc=ret_acc))
+
+    return acc
+
+
+def accuracy_against_noise_stat(sigma_sqrs, hp, train_size=0.9, ret_acc=True):
+
+    acc = []
+
+    for s in sigma_sqrs:
+        print('sigma square: ', s)
+        acc.append(accuracy_test(train_size, hp, add_noise=True, sigma_sqr=s, ret_acc=ret_acc))
 
     return acc
 

@@ -47,14 +47,19 @@ def comp_acc_vs_sizes():
 
 def comp_acc_vs_noises():
 
-    sigma_sqr = np.arange(1, 10, 2)
+    sigma_sqr = np.arange(1, 20, 5)
+    train_size = 0.8
     print(sigma_sqr)
 
     plot_acc = True
 
     accuracy = []
 
-    accuracy.append(qda.accuracy_against_noise_stat(sigma_sqr, train_size=0.5, ret_acc=plot_acc))
+    accuracy.append(qda.accuracy_against_noise_stat(sigma_sqr, train_size=train_size, ret_acc=plot_acc))
+    accuracy.append(lda.accuracy_against_noise_stat(sigma_sqr, train_size=train_size, ret_acc=plot_acc))
+    accuracy.append(rlda.accuracy_against_noise_stat(sigma_sqr, hp=0.1, train_size=train_size, ret_acc=plot_acc))
+    accuracy.append(flda.accuracy_against_noise_stat(sigma_sqr, train_size=train_size, ret_acc=plot_acc))
+    accuracy.append(knn.accuracy_against_noise_stat(sigma_sqr, train_size=train_size, ret_acc=plot_acc))
 
     for i in range(len(accuracy)):
         plt.plot(sigma_sqr, accuracy[i], color=COLORS[i], label=ALG_NAME[i])
