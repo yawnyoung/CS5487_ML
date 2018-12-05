@@ -51,33 +51,27 @@ def train_params(train_data_mat):
 
     x_cov = np.zeros((3, dim_param, dim_param))
 
-    # print(x_mean)
-
     for k in range(3):
-        # print(x_mean[k])
         for x_c in x_classified[k]:
-            # print(x_c)
             x_diff = (x_c - x_mean[k])[:, np.newaxis]
-            # print(x_diff.T)
             x_cov[k, :, :] += x_diff @ x_diff.T
-
-    # for k in range(3):
-    #     print(x_cov[k, :, :])
 
     for k in range(3):
         x_cov[k, :, :] /= count_class[k]
 
-    return x_mean, x_cov
+    prior_prob = count_class / np.sum(count_class)
+
+    return x_mean, x_cov, prior_prob
 
 
-def classify_data(x_mean, x_cov, feat):
+def classify_data(x_mean, x_cov, prior_prob, feat):
 
     z = []
 
     for k in range(3):
         x_diff = (feat - x_mean[k, :])[:, np.newaxis]
         # print(np.linalg.det(x_cov[k, :, :]))
-        score = -0.5 * x_diff.T @ np.linalg.inv(x_cov[k, :, :]) @ x_diff - 0.5 * np.log(np.linalg.det(x_cov[k, :, :]))
+        score = -0.5 * x_diff.T @ np.linalg.inv(x_cov[k, :, :]) @ x_diff - 0.5 * np.log(np.linalg.det(x_cov[k, :, :])) + np.log(prior_prob[k])
         # print(score)
         z.append(score)
 
@@ -86,7 +80,7 @@ def classify_data(x_mean, x_cov, feat):
     return np.argmax(np.array(z)) + 1
 
 
-def test_stat(x_mean, x_cov, test_data):
+def test_stat(x_mean, x_cov, prior_prob, test_data):
 
     test_targets = test_data[0]
 
@@ -95,7 +89,7 @@ def test_stat(x_mean, x_cov, test_data):
     accuracy = 0
 
     for i in range(num_test):
-        c = classify_data(x_mean, x_cov, np.array(test_data[1][i]))
+        c = classify_data(x_mean, x_cov, prior_prob, np.array(test_data[1][i]))
 
         if c == test_targets[i]:
             accuracy += 1
@@ -118,9 +112,9 @@ def accuracy_test(t_size, add_noise=False, sigma_sqr=None, ret_acc=True):
 
         train_data_mat = get_data_matrix(train_data)
 
-        x_mean, x_cov = train_params(train_data_mat)
+        x_mean, x_cov, prior_prob = train_params(train_data_mat)
 
-        acc += test_stat(x_mean, x_cov, test_data)
+        acc += test_stat(x_mean, x_cov, prior_prob, test_data)
 
     acc /= NUM_RANDOM
 

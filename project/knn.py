@@ -66,7 +66,7 @@ def accuracy_test(t_size, add_noise=False, sigma_sqr=None, ret_acc=True):
         if add_noise:
             (train_tgt, train_feat) = add_gaussian_noises((train_tgt, train_feat), sigma_sqr)
 
-        acc += test_stat(euclidean_dist, 3, train_feat, train_tgt, test_feat, test_tgt)
+        acc += test_stat(euclidean_dist, 5, train_feat, train_tgt, test_feat, test_tgt)
 
     acc /= NUM_RANDOM
 

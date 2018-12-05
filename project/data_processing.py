@@ -110,11 +110,11 @@ def add_gaussian_noises(data, sigma_sqr):
     # cov = np.identity(dim_param) * sigma_sqr
     cov = np.identity(dim_param)
 
-    noise_data_idx = np.random.randint(0, num_data, int(0.5 * num_data)).tolist()
+    noise_data_idx = np.random.randint(0, num_data, int(1 * num_data)).tolist()
 
     for i in noise_data_idx:
         # print('before: ', x[i])
-        noise = np.random.multivariate_normal(np.random.uniform(size=dim_param).reshape(dim_param)*sigma_sqr, cov, 1).flatten()
+        noise = np.random.multivariate_normal(np.random.uniform(low=-1, high=1, size=dim_param).reshape(dim_param)*sigma_sqr, cov, 1).flatten()
         # print('noise: ', noise)
         x_arr = np.array(x[i]) + noise
         x_arr = x_arr.flatten()
