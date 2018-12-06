@@ -15,7 +15,7 @@ IMAGE_NAME = ['images/12003.jpg', 'images/21077.jpg', 'images/56028.jpg', 'image
 
 
 def test_k_means():
-    img = Image.open(IMAGE_NAME[2])
+    img = Image.open(IMAGE_NAME[0])
     pl.subplot(1,3,1)
     pl.imshow(img)
 
@@ -23,10 +23,11 @@ def test_k_means():
     X, L = pa2_utils.getfeatures(img, 7)
 
     dim_param = X.shape[0]
-    num_class = 7
+    num_class = 2
     init_mean = np.ndarray((dim_param, num_class))
 
-    X_w = whiten(X.T).T
+    # X_w = whiten(X.T).T
+    X_w = np.copy(X)
     X_minmax = np.ndarray((dim_param, 2))
 
     for i in range(dim_param):
@@ -62,7 +63,7 @@ def test_k_means():
 
 
 def test_em_gmm():
-    img = Image.open(IMAGE_NAME[0])
+    img = Image.open(IMAGE_NAME[1])
     pl.subplot(1, 3, 1)
     pl.imshow(img)
 
@@ -70,10 +71,11 @@ def test_em_gmm():
     X, L = pa2_utils.getfeatures(img, 7)
 
     dim_param = X.shape[0]
-    num_class = 7
+    num_class = 10
     init_mean = np.ndarray((dim_param, num_class))
 
     X_w = whiten(X.T).T
+    # X_w = np.copy(X)
     X_minmax = np.ndarray((dim_param, 2))
 
     init_pis = np.ndarray((num_class, 1))
@@ -89,6 +91,10 @@ def test_em_gmm():
         init_mean[i, :] = np.random.uniform(X_minmax[i, 0], X_minmax[i, 1], num_class).reshape((1, num_class))
 
     print(init_mean)
+
+    epsilon = np.empty(num_class)
+    epsilon.fill(0.001)
+    init_mean, _ = k_means(X_w, init_mean, epsilon, mean_range=X_minmax)
 
     init_cov = np.ndarray((dim_param, dim_param, num_class))
     for i in range(num_class):
@@ -122,12 +128,13 @@ def test_mean_shift():
     # extract features from image (step size = 7)
     X, L = pa2_utils.getfeatures(img, 7)
 
-    X_w = whiten(X.T).T
+    # X_w = whiten(X.T).T
 
-    h = 1
-    ct = 0.001
-    pr_min = 0.1
-    x_cnvg, peaks, Z = mean_shift_clustering(X_w, h, ct, pr_min)
+    h = 50
+    ct = 0.01 * h
+    pr_min = 50
+    # x_cnvg, peaks, Z = mean_shift_clustering(X_w, h, ct, pr_min)
+    x_cnvg, peaks, Z = mean_shift_clustering(X, h, ct, pr_min)
 
     Y = Z + 1
 

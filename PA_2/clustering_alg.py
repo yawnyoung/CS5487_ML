@@ -40,6 +40,9 @@ def update_kmeans_z(x, curr_mean):
 
         dists = np.array([np.linalg.norm(x[:, i] - curr_mean[:, k]) for k in range(num_class)])
 
+        # dists = np.array([np.linalg.norm(x[:2, i] - curr_mean[:2, k]) + 0.1 * np.linalg.norm(x[2:, i] - curr_mean[2:, k])
+        #                   for k in range(num_class)])
+
         min_idx = np.argmin(dists)
 
         z[min_idx, i] = 1
@@ -98,7 +101,7 @@ def k_means(x, init_mean, epsilon, mean_range = None):
 
     iteration = 0
 
-    while one_true(np.greater(mean_err, epsilon)):
+    while one_true(np.greater(mean_err, epsilon)) and iteration < 1000:
         print('iteration: ', iteration)
         # print('current mean: ', curr_mean)
 
@@ -263,7 +266,7 @@ def mean_shift(x, h, x_init, ct):
     while x_err > ct:
 
         # find neighbor points
-        x_nbr = neighbourhood_points(x_curr, x, 0.5)
+        x_nbr = neighbourhood_points(x_curr, x, h)
 
         num_nbr = x_nbr.shape[1]
         print('# neighbors: ', num_nbr)
@@ -272,8 +275,13 @@ def mean_shift(x, h, x_init, ct):
 
         den = 0
         for i in range(num_nbr):
-            x_expectation += x_nbr[:, i] * multivariate_normal.pdf(x_nbr[:, i], x_curr, h * h * np.identity(dim_param))
-            den += multivariate_normal.pdf(x_nbr[:, i], x_curr, h * h * np.identity(dim_param))
+            cov = h * h * np.identity(dim_param)
+            cov[2, 2] = 10 * h * h
+            cov[3, 3] = 10 * h * h
+            x_expectation += x_nbr[:, i] * multivariate_normal.pdf(x_nbr[:, i], x_curr, cov)
+            den += multivariate_normal.pdf(x_nbr[:, i], x_curr, cov)
+            # x_expectation += x_nbr[:, i] * multivariate_normal.pdf(x_nbr[:, i], x_curr, h * h * np.identity(dim_param))
+            # den += multivariate_normal.pdf(x_nbr[:, i], x_curr, h * h * np.identity(dim_param))
 
         x_next = x_expectation / den
 
